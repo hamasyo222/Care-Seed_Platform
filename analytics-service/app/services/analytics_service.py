@@ -24,3 +24,4 @@ class AnalyticsService:
         finally:
             await pg_conn.close()
             mongo_client.close()
+
