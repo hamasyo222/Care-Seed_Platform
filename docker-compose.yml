@@ -78,7 +78,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173" # Viteのデフォルトポート
+      - "5173:80" # ホスト5173番をNginxの80番へマッピング
     depends_on:
       - auth-service
       - lms-service
