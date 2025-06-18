@@ -24,6 +24,20 @@ export class QuizService {
   }
 
   async submitAttempt(userId: string, attemptId: string, submitQuizDto: SubmitQuizDto) {
+    // 正誤判定ロジックを改善
+    const isCorrect = (userAnswer: any, correctAnswer: any): boolean => {
+        if (Array.isArray(correctAnswer)) {
+            if (!Array.isArray(userAnswer)) return false;
+            if (userAnswer.length !== correctAnswer.length) return false;
+            // 配列の内容が順序不同で一致するかチェック
+            const sortedUserAnswer = [...userAnswer].sort();
+            const sortedCorrectAnswer = [...correctAnswer].sort();
+            return JSON.stringify(sortedUserAnswer) === JSON.stringify(sortedCorrectAnswer);
+        }
+        // 配列でない場合は単純比較
+        return userAnswer === correctAnswer;
+    };
+    
     const attempt = await this.prisma.quiz_attempts.findUnique({
       where: { id: attemptId },
       include: { quizzes: { include: { quiz_questions: true, learning_contents: true } } },
@@ -36,14 +50,18 @@ export class QuizService {
     let totalPoints = 0;
     const feedback = [] as any[];
 
+    // 各問題を採点
     for (const question of attempt.quizzes.quiz_questions) {
       totalPoints += (question.points as number);
       const userAnswer = submitQuizDto.answers.find(a => a.questionId === question.id);
-      const isCorrect = JSON.stringify(userAnswer?.answer) === JSON.stringify(question.correct_answers);
-      if (isCorrect) {
-        score += (question.points as number);
+      
+      // 改善されたロジックで判定
+      const correct = isCorrect(userAnswer?.answer, question.correct_answers);
+
+      if (correct) {
+          score += (question.points as number);
       }
-      feedback.push({ questionId: question.id, correct: isCorrect });
+      feedback.push({ questionId: question.id, correct });
     }
 
     const finalScore = totalPoints > 0 ? (score / totalPoints) * 100 : 0;

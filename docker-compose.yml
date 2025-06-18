@@ -1,5 +1,7 @@
+version: '3.8'
+
 services:
-  # --- データベース群 ---
+  # --- Databases ---
   postgres:
     image: postgres:15-alpine
     container_name: dx-seed-postgres
@@ -25,64 +27,78 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  # --- バックエンドサービス群 ---
+  # --- Backend Services (Node.js) ---
   auth-service:
+    build: ./auth-service
     container_name: dx-seed-auth-service
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile # 各サービスフォルダにDockerfileを作成する必要があります
-    ports:
-      - "3001:3001"
-    environment:
-      - DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db
-      - JWT_SECRET=YOUR_SUPER_SECRET_KEY
-    depends_on:
-      postgres:
-        condition: service_healthy
+    ports: [ "3001:3001" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
 
   lms-service:
+    build: ./lms-service
     container_name: dx-seed-lms-service
-    build:
-      context: ./lms-service
-      dockerfile: Dockerfile
-    ports:
-      - "3003:3003"
-    environment:
-      - DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db
-      - ACCESS_TOKEN_SECRET=YOUR_SUPER_SECRET_KEY
-    depends_on:
-      postgres:
-        condition: service_healthy
+    ports: [ "3003:3003" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
 
+  employment-service:
+    build: ./employment-service
+    container_name: dx-seed-employment-service
+    ports: [ "3007:3007" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  project-service:
+    build: ./project-service # 不足していたサービス
+    container_name: dx-seed-project-service
+    ports: [ "3005:3005" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  payment-service:
+    build: ./payment-service # 不足していたサービス
+    container_name: dx-seed-payment-service
+    ports: [ "3006:3006" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+  
+  translation-service:
+    build: ./translation-service # 不足していたサービス
+    container_name: dx-seed-translation-service
+    ports: [ "3010:3010" ]
+
+  # --- Backend Services (Python/FastAPI) ---
   matching-service:
+    build: ./matching-service
     container_name: dx-seed-matching-service
-    build:
-      context: ./matching-service
-      dockerfile: Dockerfile
-    ports:
-      - "3004:8000" # FastAPIのデフォルトポートは8000
+    ports: [ "3004:8000" ]
+    environment: [ "DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  support-service:
+    build: ./support-service # 不足していたサービス
+    container_name: dx-seed-support-service
+    ports: [ "3008:8000" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  analytics-service:
+    build: ./analytics-service # 不足していたサービス
+    container_name: dx-seed-analytics-service
+    ports: [ "3009:8000" ]
     environment:
-      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/dx-seed-db
-      - JWT_SECRET=YOUR_SUPER_SECRET_KEY
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - POSTGRES_URL=postgresql://user:password@postgres:5432/dx-seed-db
+      - MONGO_URL=mongodb://mongo:27017
+    depends_on: [ postgres, mongo ]
 
-  # ... 他のバックエンドサービスも同様に定義 ...
-  # ... Define other backend services similarly ...
-
-  # --- フロントエンドサービス ---
+  # --- Frontend Service ---
   frontend:
-    container_name: dx-seed-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: dx-seed-frontend
     ports:
-      - "5173:80" # ホスト5173番をNginxの80番へマッピング
-    depends_on:
-      - auth-service
-      - lms-service
-      # ... 他のバックエンドサービス
+      - "5173:80" # Nginxのデフォルトポート80にマッピング
 
 volumes:
   postgres_data:
