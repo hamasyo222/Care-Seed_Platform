@@ -1,0 +1,96 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model users {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password_hash    String?
+  user_type        String
+  status           String   @default("active")
+  email_verified   Boolean  @default(false)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  last_login_at    DateTime?
+
+  profile          user_profiles?
+  company_user     company_users[]
+  roles            user_roles[]
+  learning_progress learning_progress[]
+
+  @@map("users")
+}
+
+model user_profiles {
+  id              String   @id @default(uuid())
+  user_id         String   @unique
+  first_name      String?
+  last_name       String?
+  first_name_kana String?
+  last_name_kana  String?
+  birth_date      DateTime? @db.Date
+  gender          String?
+  nationality     String?
+  phone           String?
+  address         Json?
+  profile_image_url String?
+  languages       Json?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  user            users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model companies {
+  id    String @id @default(uuid())
+  name  String
+  users company_users[]
+
+  @@map("companies")
+}
+
+model company_users {
+  id         String   @id @default(uuid())
+  company_id String
+  user_id    String
+  role       String
+  company    companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([company_id, user_id])
+  @@map("company_users")
+}
+
+model roles {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  users       user_roles[]
+
+  @@map("roles")
+}
+
+model user_roles {
+  id      String   @id @default(uuid())
+  user_id String
+  role_id String
+  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role    roles    @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, role_id])
+  @@map("user_roles")
+}
+
+model learning_progress {
+  id      String   @id @default(uuid())
+  user_id String
+  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("learning_progress")
+}
