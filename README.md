@@ -70,7 +70,8 @@ docker-compose exec lms-service npx prisma db push
 
 ### 5. 動作確認
 
-- **フロントエンド**: `http://localhost:5173` にアクセスします。（ポート番号は`docker-compose.yml`の設定によります）
+- **フロントエンド**: `http://localhost:5173` にアクセスします。
+  - `docker-compose.yml` ではホストの 5173 番ポートをフロントエンドコンテナの 80 番ポートへマッピングしています。
 - **バックエンド (ヘルスチェック)**:
   - `http://localhost:3001/health` (認証サービス)
   - `http://localhost:3003/health` (LMSサービス)
