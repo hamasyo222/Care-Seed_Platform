@@ -1,4 +1,4 @@
-import { PrismaClient, users } from '@prisma/client';
+import { PrismaClient, Prisma, users } from '@prisma/client';
 import { PasswordService } from './password.service';
 import { TokenService } from './token.service';
 import { IRegisterRequestBody, IAuthResponse, IAuthTokens } from '../interfaces/auth.interfaces';
@@ -25,7 +25,7 @@ export class AuthService {
 
         const hashedPassword = await this.passwordService.hash(password);
 
-        const newUser = await prisma.$transaction(async (tx) => {
+        const newUser = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             const user = await tx.users.create({
                 data: {
                     email,
