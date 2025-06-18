@@ -25,44 +25,35 @@ export class QuizService {
 
   async submitAttempt(userId: string, attemptId: string, submitQuizDto: SubmitQuizDto) {
     // 正誤判定ロジックを改善
-    const isCorrect = (userAnswer: any, correctAnswer: any): boolean => {
-        if (Array.isArray(correctAnswer)) {
+    const isCorrect = (userAnswerData: any, correctAnswerData: any): boolean => {
+        // ユーザーの回答がなければ不正解
+        if (userAnswerData === undefined || userAnswerData === null) return false;
+        const userAnswer = userAnswerData.answer;
+
+        // 正解が配列の場合 (複数選択問題など)
+        if (Array.isArray(correctAnswerData)) {
             if (!Array.isArray(userAnswer)) return false;
-            if (userAnswer.length !== correctAnswer.length) return false;
+            if (userAnswer.length !== correctAnswerData.length) return false;
+            
             // 配列の内容が順序不同で一致するかチェック
             const sortedUserAnswer = [...userAnswer].sort();
-            const sortedCorrectAnswer = [...correctAnswer].sort();
+            const sortedCorrectAnswer = [...correctAnswerData].sort();
             return JSON.stringify(sortedUserAnswer) === JSON.stringify(sortedCorrectAnswer);
         }
-        // 配列でない場合は単純比較
-        return userAnswer === correctAnswer;
+        // 正解が配列でない場合は単純比較
+        return userAnswer === correctAnswerData;
     };
-    
-    const attempt = await this.prisma.quiz_attempts.findUnique({
-      where: { id: attemptId },
-      include: { quizzes: { include: { quiz_questions: true, learning_contents: true } } },
-    });
-    if (!attempt) throw new NotFoundException(`Attempt with ID "${attemptId}" not found`);
-    if (attempt.user_id !== userId) throw new ForbiddenException('You are not allowed to submit this attempt.');
-    if (attempt.completed_at) throw new ForbiddenException('This attempt has already been completed.');
-
-    let score = 0;
-    let totalPoints = 0;
-    const feedback = [] as any[];
 
     // 各問題を採点
     for (const question of attempt.quizzes.quiz_questions) {
-      totalPoints += (question.points as number);
-      const userAnswer = submitQuizDto.answers.find(a => a.questionId === question.id);
-      
-      // 改善されたロジックで判定
-      const correct = isCorrect(userAnswer?.answer, question.correct_answers);
-
-      if (correct) {
-          score += (question.points as number);
-      }
-      feedback.push({ questionId: question.id, correct });
+        const userAnswer = submitQuizDto.answers.find(a => a.questionId === question.id);
+        
+        // 改善されたロジックで判定
+        if (isCorrect(userAnswer, question.correct_answers)) {
+            score += (question.points as number);
+        }
     }
+
 
     const finalScore = totalPoints > 0 ? (score / totalPoints) * 100 : 0;
     const passed = finalScore >= (attempt.quizzes.passing_score as number);

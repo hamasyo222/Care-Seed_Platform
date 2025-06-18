@@ -27,11 +27,18 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  # --- Backend Services (Node.js) ---
+  # --- Backend Services ---
   auth-service:
     build: ./auth-service
     container_name: dx-seed-auth-service
     ports: [ "3001:3001" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  user-service:
+    build: ./user-service
+    container_name: dx-seed-user-service
+    ports: [ "3002:3002" ]
     environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
     depends_on: { postgres: { condition: service_healthy } }
 
@@ -42,33 +49,6 @@ services:
     environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
     depends_on: { postgres: { condition: service_healthy } }
 
-  employment-service:
-    build: ./employment-service
-    container_name: dx-seed-employment-service
-    ports: [ "3007:3007" ]
-    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
-    depends_on: { postgres: { condition: service_healthy } }
-
-  project-service:
-    build: ./project-service # 不足していたサービス
-    container_name: dx-seed-project-service
-    ports: [ "3005:3005" ]
-    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
-    depends_on: { postgres: { condition: service_healthy } }
-
-  payment-service:
-    build: ./payment-service # 不足していたサービス
-    container_name: dx-seed-payment-service
-    ports: [ "3006:3006" ]
-    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
-    depends_on: { postgres: { condition: service_healthy } }
-  
-  translation-service:
-    build: ./translation-service # 不足していたサービス
-    container_name: dx-seed-translation-service
-    ports: [ "3010:3010" ]
-
-  # --- Backend Services (Python/FastAPI) ---
   matching-service:
     build: ./matching-service
     container_name: dx-seed-matching-service
@@ -76,20 +56,46 @@ services:
     environment: [ "DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/dx-seed-db" ]
     depends_on: { postgres: { condition: service_healthy } }
 
+  project-service:
+    build: ./project-service
+    container_name: dx-seed-project-service
+    ports: [ "3005:3005" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  payment-service:
+    build: ./payment-service
+    container_name: dx-seed-payment-service
+    ports: [ "3006:3006" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  employment-service:
+    build: ./employment-service
+    container_name: dx-seed-employment-service
+    ports: [ "3007:3007" ]
+    environment: [ "DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db" ]
+    depends_on: { postgres: { condition: service_healthy } }
+
   support-service:
-    build: ./support-service # 不足していたサービス
+    build: ./support-service
     container_name: dx-seed-support-service
     ports: [ "3008:8000" ]
     depends_on: { postgres: { condition: service_healthy } }
 
   analytics-service:
-    build: ./analytics-service # 不足していたサービス
+    build: ./analytics-service
     container_name: dx-seed-analytics-service
     ports: [ "3009:8000" ]
     environment:
       - POSTGRES_URL=postgresql://user:password@postgres:5432/dx-seed-db
       - MONGO_URL=mongodb://mongo:27017
     depends_on: [ postgres, mongo ]
+    
+  translation-service:
+    build: ./translation-service
+    container_name: dx-seed-translation-service
+    ports: [ "3010:3010" ]
 
   # --- Frontend Service ---
   frontend:

@@ -1,18 +1,21 @@
 import React from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from './store/auth.store'; // パスはプロジェクト構成に合わせる
+// import { useAuthStore } from './store/auth.store'; // 実際のパスに修正
 
-// Page Components
-import { LoginPage } from './features/auth/LoginPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { LmsPage } from './pages/LmsPage';
-import { TalentSearchPage } from './pages/TalentSearchPage';
-import { ProjectDetailPage } from './pages/ProjectDetailPage';
-import { SupportChatPage } from './pages/SupportChatPage';
-import { AdminDashboardPage } from './pages/AdminDashboardPage';
-import { UnauthorizedPage } from './pages/UnauthorizedPage';
+// --- Page Components ---
+// import { LoginPage } from './features/auth/LoginPage';
+// import { DashboardPage } from './pages/DashboardPage';
+// import { AdminDashboardPage } from './pages/AdminDashboardPage';
+// import { UnauthorizedPage } from './pages/UnauthorizedPage';
 
-// Role-Based Access Controlを持つ保護ルート
+// このデモではコンポーネントを仮定義します
+const LoginPage = () => <div>Login Page</div>;
+const DashboardPage = () => <div>Dashboard Page</div>;
+const AdminDashboardPage = () => <div>Admin Dashboard</div>;
+const UnauthorizedPage = () => <div>Unauthorized</div>;
+const useAuthStore = () => ({ isAuthenticated: true, user: { roles: ['admin'] } }); // モック
+
+// --- Role-Based Access Control (RBAC)を持つ保護ルート ---
 const ProtectedRoute: React.FC<{ allowedRoles?: string[] }> = ({ allowedRoles }) => {
   const { isAuthenticated, user } = useAuthStore();
 
@@ -39,10 +42,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
-      { path: 'lms', element: <LmsPage /> },
-      { path: 'matching/search', element: <TalentSearchPage /> },
-      { path: 'projects/:projectId', element: <ProjectDetailPage /> },
-      { path: 'support/chat', element: <SupportChatPage /> },
+      // ...他のユーザー向けルート
       { 
         path: 'admin',
         element: <ProtectedRoute allowedRoles={['admin', 'platform_admin']} />,
