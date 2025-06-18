@@ -1,2 +1,7 @@
 import React from 'react';
-export const App: React.FC = () => <div>DX Seed Frontend</div>;
+import { RouterProvider } from 'react-router-dom';
+import { router } from './router';
+
+export const App: React.FC = () => {
+  return <RouterProvider router={router} />;
+};
