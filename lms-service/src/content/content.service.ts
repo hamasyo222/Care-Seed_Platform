@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryContentDto } from './dto/query-content.dto';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ContentService {
@@ -9,7 +8,8 @@ export class ContentService {
 
   async findAll(queryDto: QueryContentDto) {
     const { skip, limit, search, categoryId, difficulty } = queryDto;
-    const where: Prisma.learning_contentsWhereInput = {
+    // The Prisma client types are not available here, so use a plain object.
+    const where = {
       is_published: true,
       AND: [],
     };

@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { learning_contents } from '@prisma/client';
+// The Prisma client in this service does not expose model types.
+// Define a minimal interface for the values we need.
+interface LearningContent {
+  id: string;
+  title: string;
+}
 import crypto from 'crypto';
 
 @Injectable()
 export class CertificateService {
   constructor(private prisma: PrismaService) {}
 
-  async issueCertificateForCompletion(userId: string, content: learning_contents) {
+  async issueCertificateForCompletion(userId: string, content: LearningContent) {
     const existingCertificate = await this.prisma.certificates.findFirst({
       where: { user_id: userId, content_id: content.id },
     });
