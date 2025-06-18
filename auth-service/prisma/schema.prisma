@@ -22,6 +22,7 @@ model users {
   company_user     company_users[]
   roles            user_roles[]
   learning_progress learning_progress[]
+  certificates     certificates[]
 
   @@map("users")
 }
@@ -87,10 +88,131 @@ model user_roles {
   @@map("user_roles")
 }
 
-model learning_progress {
-  id      String   @id @default(uuid())
-  user_id String
-  user    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model content_categories {
+  id    String   @id @default(uuid())
+  name  String
+  learning_contents learning_contents[]
 
+  @@map("content_categories")
+}
+
+model learning_contents {
+  id               String   @id @default(uuid())
+  title            String
+  description      String?
+  category_id      String?
+  content_type     String?
+  difficulty_level String?
+  estimated_duration Int?
+  content_data     Json?
+  file_url         String?
+  thumbnail_url    String?
+  is_published     Boolean  @default(false)
+  published_at     DateTime?
+  created_by       String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  category         content_categories? @relation(fields: [category_id], references: [id])
+  quizzes          quizzes[]
+  learning_progress learning_progress[]
+  certificates     certificates[]
+
+  @@map("learning_contents")
+}
+
+model learning_progress {
+  id                  String   @id @default(uuid())
+  user_id             String
+  content_id          String
+  status              String   @default("not_started")
+  progress_percentage Float    @default(0.0)
+  started_at          DateTime?
+  completed_at        DateTime?
+  last_accessed_at    DateTime?
+  time_spent          Int      @default(0)
+  attempts            Int      @default(0)
+  best_score          Float?
+  notes               String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  user                users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  learning_contents   learning_contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, content_id])
   @@map("learning_progress")
+}
+
+model quizzes {
+  id                String   @id @default(uuid())
+  content_id        String
+  title             String
+  instructions      String?
+  time_limit        Int?
+  passing_score     Float?   @default(70.0)
+  max_attempts      Int?     @default(3)
+  shuffle_questions Boolean? @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  learning_contents learning_contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  quiz_questions    quiz_questions[]
+  quiz_attempts     quiz_attempts[]
+
+  @@map("quizzes")
+}
+
+model quiz_questions {
+  id              String   @id @default(uuid())
+  quiz_id         String
+  question_text   String
+  question_type   String?
+  options         Json?
+  correct_answers Json?
+  explanation     String?
+  points          Float?  @default(1.0)
+  sort_order      Int?    @default(0)
+
+  quizzes         quizzes @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+
+  @@map("quiz_questions")
+}
+
+model quiz_attempts {
+  id           String   @id @default(uuid())
+  user_id      String
+  quiz_id      String
+  started_at   DateTime @default(now())
+  completed_at DateTime?
+  score        Float?
+  passed       Boolean?
+  time_taken   Int?
+  answers      Json?
+  created_at   DateTime @default(now())
+
+  quizzes      quizzes @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  users        users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model certificates {
+  id               String   @id @default(uuid())
+  user_id          String
+  content_id       String
+  certificate_type String?
+  title            String
+  description      String?
+  issued_at        DateTime @default(now())
+  expires_at       DateTime?
+  certificate_url  String?
+  verification_code String  @unique
+  metadata         Json?
+  created_at       DateTime @default(now())
+
+  users            users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  learning_contents learning_contents @relation(fields: [content_id], references: [id])
+
+  @@map("certificates")
 }
