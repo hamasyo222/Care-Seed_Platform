@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # --- データベース群 ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: dx-seed-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dx-seed-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d dx-seed-db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:6.0
+    container_name: dx-seed-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # --- バックエンドサービス群 ---
+  auth-service:
+    container_name: dx-seed-auth-service
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile # 各サービスフォルダにDockerfileを作成する必要があります
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db
+      - JWT_SECRET=YOUR_SUPER_SECRET_KEY
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  lms-service:
+    container_name: dx-seed-lms-service
+    build:
+      context: ./lms-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/dx-seed-db
+      - ACCESS_TOKEN_SECRET=YOUR_SUPER_SECRET_KEY
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  matching-service:
+    container_name: dx-seed-matching-service
+    build:
+      context: ./matching-service
+      dockerfile: Dockerfile
+    ports:
+      - "3004:8000" # FastAPIのデフォルトポートは8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/dx-seed-db
+      - JWT_SECRET=YOUR_SUPER_SECRET_KEY
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ... 他のバックエンドサービスも同様に定義 ...
+  # ... Define other backend services similarly ...
+
+  # --- フロントエンドサービス ---
+  frontend:
+    container_name: dx-seed-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173" # Viteのデフォルトポート
+    depends_on:
+      - auth-service
+      - lms-service
+      # ... 他のバックエンドサービス
+
+volumes:
+  postgres_data:
+  mongo_data:
