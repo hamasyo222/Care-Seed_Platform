@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Helvetica', 'Arial', sans-serif; line-height: 1.6; color: #333; }
+    h1 { color: #1a237e; border-bottom: 2px solid #1a237e; padding-bottom: 10px; }
+    .section { margin-top: 20px; }
+    .label { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>雇用契約書 (Employment Contract)</h1>
+  <div class="section">
+    <p>
+      <span class="label">会社 (Company):</span> {{company.name}}<br>
+      <span class="label">従業員 (Employee):</span> {{talent.profile.first_name}} {{talent.profile.last_name}}
+    </p>
+  </div>
+  <div class="section">
+    <h2>1. 契約期間 (Contract Period)</h2>
+    <p>
+      <span class="label">開始日 (Start Date):</span> {{contract.startDate}}
+    </p>
+  </div>
+  <div class="section">
+    <h2>2. 役職 (Position)</h2>
+    <p>
+      <span class="label">役職 (Job Title):</span> {{contract.jobTitle}}
+    </p>
+  </div>
+  <div class="section">
+    <h2>3. 給与 (Salary)</h2>
+    <p>
+      <span class="label">基本給 (Base Salary):</span> {{contract.salary.amount}} JPY ({{contract.salary.type}})
+    </p>
+  </div>
+  <div class="section">
+    <p>本契約の条件に合意します。</p>
+    <p>Agreed to the terms of this contract.</p>
+    <br><br>
+    <p>_________________________</p>
+    <p>{{company.name}}</p>
+    <br><br>
+    <p>_________________________</p>
+    <p>{{talent.profile.first_name}} {{talent.profile.last_name}}</p>
+  </div>
+</body>
+</html>
